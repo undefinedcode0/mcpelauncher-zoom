@@ -50,7 +50,7 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
     auto CameraAPI_typeinfo_name = hat::find_pattern(range1, hat::object_to_signature("9CameraAPI")).get();
     auto CameraAPI_typeinfo = hat::find_pattern(range2, hat::object_to_signature(CameraAPI_typeinfo_name)).get() - sizeof(void*);
     auto CameraAPI_vtable = hat::find_pattern(range2, hat::object_to_signature(CameraAPI_typeinfo)).get() + sizeof(void*);
-    auto CameraAPI_tryGetFOV = reinterpret_cast<unsigned long (**)(void*)>(CameraAPI_vtable) + 6;
+    auto CameraAPI_tryGetFOV = reinterpret_cast<unsigned long (**)(void*)>(CameraAPI_vtable) + 7;
 
     CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
 
