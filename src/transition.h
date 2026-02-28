@@ -1,16 +1,18 @@
+#pragma once
+
 class Transition {
 private:
-    unsigned long start;
-    unsigned long end;
+    float start;
+    float end;
     long startTime;
     long endTime;
-    unsigned long current;
+    float current;
     bool transitionInProgress;
 
 public:
-    void startTransition(unsigned long startVal, unsigned long endVal, int duration);
+    void startTransition(float startVal, float endVal, int duration);
     void tick();
-    unsigned long getCurrent() {
+    float getCurrent() {
         return current;
     }
     bool inProgress() {

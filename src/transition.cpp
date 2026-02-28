@@ -1,7 +1,7 @@
 #include "transition.h"
 #include "util.h"
 
-void Transition::startTransition(unsigned long startVal, unsigned long endVal, int durationMs) {
+void Transition::startTransition(float startVal, float endVal, int durationMs) {
     if(transitionInProgress) {
         start = current;
     } else {
@@ -18,16 +18,11 @@ void Transition::tick() {
         int64_t time = getEpochTime();
         int64_t timeSinceStart = time - startTime;
         double currentProgress = (double)timeSinceStart / (double)(endTime - startTime);
-        if(currentProgress >= 1) {
+        if(currentProgress >= 1.0) {
             current = end;
             transitionInProgress = false;
+            return;
         }
-        if(start > end) {
-            unsigned long diff = start - end;
-            current = start - (diff * currentProgress);
-        } else {
-            unsigned long diff = end - start;
-            current = start + (diff * currentProgress);
-        }
+        current = start + (end - start) * (float)currentProgress;
     }
 }

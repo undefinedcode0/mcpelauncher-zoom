@@ -3,50 +3,78 @@
 #include "util.h"
 #include "conf.h"
 
+// The hook writes the FOV float directly to offset +0x18 on the object
+// returned by CameraAPI vtable[13]. CameraAPI_tryGetFOV_orig returns a
+// pointer to that object; we read the current FOV from it, store it as
+// lastClientZoom, and overwrite it when zoom is active.
+
 unsigned long Zoom::CameraAPI_tryGetFOV(void* t) {
-    lastClientZoom = CameraAPI_tryGetFOV_orig(t);
+    unsigned long result = CameraAPI_tryGetFOV_orig(t);
+    if(result == 0) return result;
+
+    float* fovPtr = reinterpret_cast<float*>(result + 0x18);
+    lastClientZoom = *fovPtr;
+
     if(!Conf::animated) {
-        return zoomKeyDown ? zoomLevel : lastClientZoom;
+        if(zoomKeyDown) {
+            *fovPtr = zoomLevel;
+        }
+        return result;
     }
+
     if(transition.inProgress() || zoomKeyDown) {
         transition.tick();
-        unsigned long current = transition.getCurrent();
-        if(current == 0) {
-            return lastClientZoom;
+        float current = transition.getCurrent();
+        if(current > 0.0f) {
+            *fovPtr = current;
         }
-        return current;
     }
-    return lastClientZoom;
+
+    return result;
+}
+
+bool Zoom::isZooming() {
+    return zoomKeyDown || transition.inProgress();
+}
+
+float Zoom::getCurrentFOV() {
+    return transition.inProgress() ? transition.getCurrent() : zoomLevel;
 }
 
 bool Zoom::onMouseScroll(double dy) {
     if(zoomKeyDown && game_window_is_mouse_locked(game_window_get_primary_window())) {
         if(dy > 0) {
-            if(zoomLevel > 5310000000) {
+            if(zoomLevel > zoomMin) {
+                float newLevel = zoomLevel - zoomStep;
                 if(Conf::animated) {
-                    transition.startTransition(zoomLevel, zoomLevel - 1000000, 100);
+                    transition.startTransition(zoomLevel, newLevel, 100);
                 }
-                zoomLevel -= 1000000;
+                zoomLevel = newLevel;
             }
-        } else if(zoomLevel < 5360000000) {
-            if(Conf::animated) {
-                transition.startTransition(zoomLevel, zoomLevel + 1000000, 100);
+        } else {
+            if(zoomLevel < zoomMax) {
+                float newLevel = zoomLevel + zoomStep;
+                if(Conf::animated) {
+                    transition.startTransition(zoomLevel, newLevel, 100);
+                }
+                zoomLevel = newLevel;
             }
-            zoomLevel += 1000000;
         }
         return true;
     }
     return false;
 }
+
 void Zoom::onKeyboard(int keyCode, int action) {
     if(keyCode == Conf::zoomKey) {
-        unsigned long diff = unsignedDiff(lastClientZoom, zoomLevel);
+        float diff = lastClientZoom > zoomLevel ? lastClientZoom - zoomLevel : zoomLevel - lastClientZoom;
+        int duration = clamp(100, (int)(diff / 0.15f), 250);
         switch(action) {
         case 0:
             if(game_window_is_mouse_locked(game_window_get_primary_window()) && !zoomKeyDown) {
                 zoomKeyDown = true;
                 if(Conf::animated) {
-                    transition.startTransition(lastClientZoom, zoomLevel, clamp(100, diff / 150000, 250));
+                    transition.startTransition(lastClientZoom, zoomLevel, duration);
                 }
             }
             break;
@@ -54,9 +82,10 @@ void Zoom::onKeyboard(int keyCode, int action) {
             if(zoomKeyDown) {
                 zoomKeyDown = false;
                 if(Conf::animated) {
-                    transition.startTransition(zoomLevel, lastClientZoom, clamp(100, diff / 150000, 250));
+                    transition.startTransition(zoomLevel, lastClientZoom, duration);
                 }
             }
+            break;
         default:
             break;
         }
