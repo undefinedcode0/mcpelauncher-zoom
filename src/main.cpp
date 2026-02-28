@@ -86,7 +86,7 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
     *CameraAPI_tryGetFOV = [](void* t) -> unsigned long {
         unsigned long result = CameraAPI_tryGetFOV_orig(t);
         fprintf(stderr, "[zoom] scanning object at 0x%lx\n", result);
-        for(int i = 0; i < 64; i++) {
+        for(int i = 0; i < 256; i++) {
             float f = *reinterpret_cast<float*>(result + i * 4);
             if(f > 50.0f && f < 150.0f) {  // only print plausible FOV range
                 fprintf(stderr, "[zoom]   [%d] (+0x%x) = %f  <-- possible FOV\n", i, i * 4, f);
