@@ -118,7 +118,7 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
 
   *CameraAPI_tryGetFOV = [](void *t) -> unsigned long {
-    unsigned long result = CameraAPI_tryGetFOV_orig(t);
+    return zoom.CameraAPI_tryGetFOV(t);
     if (result == 0)
       return result;
     float *fovPtr = reinterpret_cast<float *>(result + 0x18);
