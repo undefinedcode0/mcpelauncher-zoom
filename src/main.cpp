@@ -119,13 +119,6 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
 
   *CameraAPI_tryGetFOV = [](void *t) -> unsigned long {
     return zoom.CameraAPI_tryGetFOV(t);
-    if (result == 0)
-      return result;
-    float *fovPtr = reinterpret_cast<float *>(result + 0x18);
-    fprintf(stderr, "[zoom] fov=%.2f zoomKeyDown=%d\n", *fovPtr,
-            (int)zoom.isZooming());
-    return zoom.CameraAPI_tryGetFOV(
-        t); // note: call after logging, not double-calling orig
   };
 
   initImgui();
