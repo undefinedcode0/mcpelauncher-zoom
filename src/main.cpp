@@ -84,7 +84,7 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
     CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
 
     *CameraAPI_tryGetFOV = [](void* t) -> unsigned long {
-        fprintf(stderr, "[zoom] hook called, t=%p, zoomKeyDown=%d\n", t, (int)zoom.zoomKeyDown);
+        fprintf(stderr, "[zoom] hook called, t=%p\n", t);
         unsigned long result = CameraAPI_tryGetFOV_orig(t);
         fprintf(stderr, "[zoom] orig returned: 0x%lx\n", result);
         return result;
