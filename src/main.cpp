@@ -118,10 +118,15 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
 
   *CameraAPI_tryGetFOV = [](void *t) -> unsigned long {
-    void *rsi_val;
-    asm volatile("mov %%rsi, %0" : "=r"(rsi_val));
-    fprintf(stderr, "[zoom] rdi=%p rsi=%p\n", t, rsi_val);
-    return CameraAPI_tryGetFOV_orig(t);
+    uint64_t rdx_out;
+    uint64_t result;
+    asm volatile("call *%2\n\t"
+                 "mov %%rdx, %1"
+                 : "=a"(result), "=r"(rdx_out)
+                 : "r"(CameraAPI_tryGetFOV_orig), "D"(t)
+                 : "rcx", "rsi", "r8", "r9", "r10", "r11", "memory");
+    asm volatile("mov %0, %%rdx" ::"r"(rdx_out));
+    return result;
   };
 
   initImgui();
