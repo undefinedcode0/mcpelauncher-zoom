@@ -118,7 +118,10 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
 
   *CameraAPI_tryGetFOV = [](void *t) -> unsigned long {
-    return zoom.CameraAPI_tryGetFOV(t);
+    void *rsi_val;
+    asm("mov %0, rsi" : "=r"(rsi_val));
+    fprintf(stderr, "[zoom] rdi=%p rsi=%p\n", t, rsi_val);
+    return CameraAPI_tryGetFOV_orig(t);
   };
 
   initImgui();
