@@ -119,7 +119,7 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
 
   *CameraAPI_tryGetFOV = [](void *t) -> unsigned long {
     void *rsi_val;
-    asm("mov %0, rsi" : "=r"(rsi_val));
+    asm volatile("mov %%rsi, %0" : "=r"(rsi_val));
     fprintf(stderr, "[zoom] rdi=%p rsi=%p\n", t, rsi_val);
     return CameraAPI_tryGetFOV_orig(t);
   };
