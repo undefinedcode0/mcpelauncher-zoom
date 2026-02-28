@@ -32,10 +32,12 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
     auto mcLib = dlopen("libminecraftpe.so", 0);
 
     std::span<std::byte> range1, range2;
+    uintptr_t mc_base = 0;
 
     auto callback = [&](const dl_phdr_info& info) {
         if(auto h = dlopen(info.dlpi_name, RTLD_NOLOAD); dlclose(h), h != mcLib)
             return 0;
+        mc_base = info.dlpi_addr;
         range1 = {reinterpret_cast<std::byte*>(info.dlpi_addr + info.dlpi_phdr[1].p_vaddr), info.dlpi_phdr[1].p_memsz};
         range2 = {reinterpret_cast<std::byte*>(info.dlpi_addr + info.dlpi_phdr[2].p_vaddr), info.dlpi_phdr[2].p_memsz};
         return 1;
@@ -51,6 +53,33 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
     auto CameraAPI_typeinfo = hat::find_pattern(range2, hat::object_to_signature(CameraAPI_typeinfo_name)).get() - sizeof(void*);
     auto CameraAPI_vtable = hat::find_pattern(range2, hat::object_to_signature(CameraAPI_typeinfo)).get() + sizeof(void*);
     auto CameraAPI_tryGetFOV = reinterpret_cast<unsigned long (**)(void*)>(CameraAPI_vtable) + 13;
+
+    // --- sanity checks ---
+    uintptr_t vtable_offset = reinterpret_cast<uintptr_t>(CameraAPI_vtable) - mc_base;
+    uintptr_t hook_offset   = reinterpret_cast<uintptr_t>(CameraAPI_tryGetFOV) - mc_base;
+    fprintf(stderr, "[zoom] mc_base:              0x%lx\n", mc_base);
+    fprintf(stderr, "[zoom] CameraAPI_vtable:     base+0x%lx (expected base+0x13010010)\n", vtable_offset);
+    fprintf(stderr, "[zoom] hook target [+13]:    base+0x%lx (expected base+0x13010078)\n", hook_offset);
+
+    // Validate vtable header: vtable[-2] should be 0 (top-offset), vtable[-1] should be typeinfo
+    auto vtable_raw = reinterpret_cast<void**>(CameraAPI_vtable);
+    void* top_offset  = vtable_raw[-2];
+    void* ti_ptr      = vtable_raw[-1];
+    fprintf(stderr, "[zoom] vtable[-2] (top-offset, expect 0x0): %p\n", top_offset);
+    fprintf(stderr, "[zoom] vtable[-1] (typeinfo ptr):           %p\n", ti_ptr);
+    fprintf(stderr, "[zoom] CameraAPI_typeinfo (expected match): %p\n", (void*)CameraAPI_typeinfo);
+
+    if(top_offset != nullptr) {
+        fprintf(stderr, "[zoom] ERROR: vtable[-2] is not 0 — wrong vtable location (false match). Aborting hook.\n");
+        return;
+    }
+    if(ti_ptr != (void*)CameraAPI_typeinfo) {
+        fprintf(stderr, "[zoom] ERROR: vtable[-1] does not point to CameraAPI typeinfo — wrong vtable location (false match). Aborting hook.\n");
+        return;
+    }
+
+    fprintf(stderr, "[zoom] vtable looks correct, installing hook at index 13\n");
+    // --- end sanity checks ---
 
     CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
 
