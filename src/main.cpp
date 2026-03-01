@@ -13,6 +13,8 @@ Zoom zoom;
 
 extern "C" [[gnu::visibility("default")]] void mod_preinit() {}
 
+uintptr_t mc_base = 0;
+
 extern "C" [[gnu::visibility("default")]] void mod_init() {
   Conf::load();
 
@@ -35,7 +37,6 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   auto mcLib = dlopen("libminecraftpe.so", 0);
 
   std::span<std::byte> range1, range2;
-  uintptr_t mc_base = 0;
 
   auto callback = [&](const dl_phdr_info &info) {
     if (auto h = dlopen(info.dlpi_name, RTLD_NOLOAD); dlclose(h), h != mcLib)
@@ -116,11 +117,14 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
 
   *reinterpret_cast<FovResult (**)(void *)>(CameraAPI_tryGetFOV) =
       [](void *t) -> FovResult {
+    void *inner =
+        *reinterpret_cast<void **>(reinterpret_cast<uintptr_t>(t) + 8);
+    void *vtbl = *reinterpret_cast<void **>(inner);
+    void *fn =
+        *reinterpret_cast<void **>(reinterpret_cast<uintptr_t>(vtbl) + 0xE0);
+    fprintf(stderr, "[zoom] fn_offset=0x%lx\n",
+            reinterpret_cast<uintptr_t>(fn) - mc_base);
     FovResult r = CameraAPI_tryGetFOV_orig(t);
-    uint64_t saved_xmm0[2];
-    asm volatile("movdqu %%xmm0, %0" : "=m"(saved_xmm0));
-    zoom.applyFOV(r.rax);
-    asm volatile("movdqu %0, %%xmm0" ::"m"(saved_xmm0));
     return r;
   };
 
