@@ -35,19 +35,10 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
           gw, "game_window_add_mouse_scroll_callback");
 
   auto mcLib = dlopen("libminecraftpe.so", 0);
-
-  std::span<std::byte> range1, range2;
-
   auto callback = [&](const dl_phdr_info &info) {
     if (auto h = dlopen(info.dlpi_name, RTLD_NOLOAD); dlclose(h), h != mcLib)
       return 0;
     mc_base = info.dlpi_addr;
-    range1 = {reinterpret_cast<std::byte *>(info.dlpi_addr +
-                                            info.dlpi_phdr[1].p_vaddr),
-              info.dlpi_phdr[1].p_memsz};
-    range2 = {reinterpret_cast<std::byte *>(info.dlpi_addr +
-                                            info.dlpi_phdr[2].p_vaddr),
-              info.dlpi_phdr[2].p_memsz};
     return 1;
   };
 
@@ -62,7 +53,22 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   CameraAPI_tryGetFOV_orig = *fovFn;
   *fovFn = [](void *t) -> float {
     float fov = CameraAPI_tryGetFOV_orig(t);
-    return zoom.applyFOV(fov);
+    if (fov <= 0.0f)
+      return fov;
+
+    void *p1 =
+        *reinterpret_cast<void **>(reinterpret_cast<uintptr_t>(t) + 0x180);
+    if (!p1)
+      return fov;
+    void *p2 =
+        *reinterpret_cast<void **>(reinterpret_cast<uintptr_t>(p1) + 0xC8);
+    if (!p2)
+      return fov;
+    float *fovPtr =
+        reinterpret_cast<float *>(reinterpret_cast<uintptr_t>(p2) + 0x8);
+
+    zoom.applyFOV(fov, fovPtr);
+    return *fovPtr;
   };
 
   initImgui();
