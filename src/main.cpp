@@ -111,19 +111,14 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   fprintf(stderr, "[zoom] vtable looks correct, installing hook at index 13\n");
   // --- end sanity checks ---
 
-  CameraAPI_tryGetFOV_orig = *CameraAPI_tryGetFOV;
+  CameraAPI_tryGetFOV_orig =
+      *reinterpret_cast<FovResult (**)(void *)>(CameraAPI_tryGetFOV);
 
-  *CameraAPI_tryGetFOV = [](void *t) -> unsigned long {
-    uint64_t rdx_out;
-    uint64_t result;
-    asm volatile("call *%2\n\t"
-                 "mov %%rdx, %1"
-                 : "=a"(result), "=r"(rdx_out)
-                 : "r"(CameraAPI_tryGetFOV_orig), "D"(t)
-                 : "rcx", "rsi", "r8", "r9", "r10", "r11", "memory");
-    zoom.applyFOV(result);
-    asm volatile("mov %0, %%rdx" ::"r"(rdx_out));
-    return result;
+  *reinterpret_cast<FovResult (**)(void *)>(CameraAPI_tryGetFOV) =
+      [](void *t) -> FovResult {
+    FovResult r = CameraAPI_tryGetFOV_orig(t);
+    zoom.applyFOV(r.rax);
+    return r;
   };
 
   initImgui();

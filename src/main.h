@@ -15,3 +15,9 @@ inline void (*game_window_add_mouse_scroll_callback)(
     bool (*callback)(void *user, double x, double y, double dx, double dy));
 
 inline unsigned long (*CameraAPI_tryGetFOV_orig)(void *);
+
+struct FovResult {
+  uint64_t rax;
+  uint64_t rdx;
+};
+inline FovResult (*CameraAPI_tryGetFOV_orig)(void *);
