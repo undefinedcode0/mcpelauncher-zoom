@@ -12,16 +12,21 @@ float Zoom::applyFOV(float fov) {
   if (fov > 0.0f)
     lastClientZoom = fov;
 
+  float result;
   if (!Conf::animated) {
-    return zoomKeyDown ? zoomLevel : fov;
-  }
-  if (transition.inProgress()) {
+    result = zoomKeyDown ? zoomLevel : fov;
+  } else if (transition.inProgress()) {
     transition.tick();
-    return transition.getCurrent();
+    result = transition.getCurrent();
+  } else if (zoomKeyDown) {
+    result = zoomLevel;
+  } else {
+    result = fov;
   }
-  if (zoomKeyDown)
-    return zoomLevel;
-  return fov;
+  fprintf(stderr,
+          "[zoom] fov=%.2f returning=%.2f zoomKeyDown=%d inProgress=%d\n", fov,
+          result, (int)zoomKeyDown, (int)transition.inProgress());
+  return result;
 }
 
 bool Zoom::isZooming() { return zoomKeyDown || transition.inProgress(); }
