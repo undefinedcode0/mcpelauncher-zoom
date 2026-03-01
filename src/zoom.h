@@ -14,7 +14,7 @@ private:
   Transition transition;
 
 public:
-  void applyFOV(unsigned long result);
+  float applyFOV(float fov);
   bool onMouseScroll(double dy);
   void onKeyboard(int keyCode, int action);
 

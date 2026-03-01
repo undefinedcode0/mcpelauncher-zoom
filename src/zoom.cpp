@@ -8,24 +8,18 @@
 // pointer to that object; we read the current FOV from it, store it as
 // lastClientZoom, and overwrite it when zoom is active.
 
-void Zoom::applyFOV(unsigned long result) {
-  if (result == 0)
-    return;
-  float *fovPtr = reinterpret_cast<float *>(result + 0x18);
-  lastClientZoom = *fovPtr;
-
+float Zoom::applyFOV(float fov) {
+  lastClientZoom = fov;
   if (!Conf::animated) {
-    if (zoomKeyDown)
-      *fovPtr = zoomLevel;
-    return;
+    return zoomKeyDown ? zoomLevel : fov;
   }
-
   if (transition.inProgress() || zoomKeyDown) {
     transition.tick();
     float current = transition.getCurrent();
     if (current > 0.0f)
-      *fovPtr = current;
+      return current;
   }
+  return fov;
 }
 
 bool Zoom::isZooming() { return zoomKeyDown || transition.inProgress(); }
