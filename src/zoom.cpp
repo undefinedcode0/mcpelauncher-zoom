@@ -66,7 +66,7 @@ void Zoom::onKeyboard(int keyCode, int action) {
   if (keyCode == Conf::zoomKey) {
     float diff = lastClientZoom > zoomLevel ? lastClientZoom - zoomLevel
                                             : zoomLevel - lastClientZoom;
-    int duration = clamp(100, (int)(diff / 0.15f), 250);
+    int duration = clamp(100, (int)(diff / 0.0015f), 250);
     switch (action) {
     case 0:
       if (game_window_is_mouse_locked(game_window_get_primary_window()) &&

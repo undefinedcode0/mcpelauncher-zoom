@@ -5,10 +5,10 @@
 class Zoom {
 private:
   bool zoomKeyDown = false;
-  float zoomLevel = 30.0f;     // target zoom FOV in degrees (vertical)
-  float zoomMin = 20.0f;       // minimum zoom (most zoomed in)
-  float zoomMax = 40.0f;       // maximum zoom (least zoomed in)
-  float zoomStep = 2.0f;       // scroll step in degrees
+  float zoomLevel = 0.35f;     // ~20° in radians
+  float zoomMin = 0.20f;       // ~11°
+  float zoomMax = 0.70f;       // ~40°
+  float zoomStep = 0.05f;      // scroll step
   float lastClientZoom = 0.0f; // last FOV reported by the game
 
   Transition transition;
