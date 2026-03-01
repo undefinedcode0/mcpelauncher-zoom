@@ -12,9 +12,11 @@ private:
   float lastClientZoom = 0.0f; // last FOV reported by the game
 
   Transition transition;
+  void writeFOV(float fov);
+  float *cachedFovPtr = nullptr;
 
 public:
-  void applyFOV(float fov, float* fovPtr);
+  void applyFOV(float fov, float *fovPtr);
   bool onMouseScroll(double dy);
   void onKeyboard(int keyCode, int action);
 

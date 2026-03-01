@@ -8,20 +8,26 @@
 // pointer to that object; we read the current FOV from it, store it as
 // lastClientZoom, and overwrite it when zoom is active.
 
-void Zoom::applyFOV(float fov, float *fovPtr) {
-  if (fov > 0.0f)
-    lastClientZoom = fov;
-
+void Zoom::writeFOV(float fov) {
+  if (!cachedFovPtr)
+    return;
   if (!Conf::animated) {
-    *fovPtr = zoomKeyDown ? zoomLevel : fov;
+    *cachedFovPtr = zoomKeyDown ? zoomLevel : fov > 0.0f ? fov : lastClientZoom;
   } else if (transition.inProgress()) {
     transition.tick();
-    *fovPtr = transition.getCurrent();
+    *cachedFovPtr = transition.getCurrent();
   } else if (zoomKeyDown) {
-    *fovPtr = zoomLevel;
+    *cachedFovPtr = zoomLevel;
   } else {
-    *fovPtr = fov;
+    *cachedFovPtr = fov > 0.0f ? fov : lastClientZoom;
   }
+}
+
+void Zoom::applyFOV(float fov, float *fovPtr) {
+  cachedFovPtr = fovPtr;
+  if (fov > 0.0f)
+    lastClientZoom = fov;
+  writeFOV(fov);
 }
 
 bool Zoom::isZooming() { return zoomKeyDown || transition.inProgress(); }
@@ -31,8 +37,6 @@ float Zoom::getCurrentFOV() {
 }
 
 bool Zoom::onMouseScroll(double dy) {
-  fprintf(stderr, "[zoom] scroll dy=%.2f zoomKeyDown=%d\n", dy,
-          (int)zoomKeyDown);
   if (zoomKeyDown &&
       game_window_is_mouse_locked(game_window_get_primary_window())) {
     if (dy > 0) {
@@ -70,6 +74,7 @@ void Zoom::onKeyboard(int keyCode, int action) {
         if (Conf::animated) {
           transition.startTransition(lastClientZoom, zoomLevel, duration);
         }
+        writeFOV(0); // apply immediately
       }
       break;
     case 2:
@@ -78,6 +83,7 @@ void Zoom::onKeyboard(int keyCode, int action) {
         if (Conf::animated) {
           transition.startTransition(zoomLevel, lastClientZoom, duration);
         }
+        writeFOV(0); // restore immediately
       }
       break;
     default:
