@@ -14,7 +14,7 @@ private:
   Transition transition;
 
 public:
-  unsigned long CameraAPI_tryGetFOV(void *t);
+  void applyFOV(unsigned long result);
   bool onMouseScroll(double dy);
   void onKeyboard(int keyCode, int action);
 

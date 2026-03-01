@@ -125,6 +125,7 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
                  : "=a"(result), "=r"(rdx_out)
                  : "r"(CameraAPI_tryGetFOV_orig), "D"(t)
                  : "rcx", "rsi", "r8", "r9", "r10", "r11", "memory");
+    zoom.applyFOV(result);
     asm volatile("mov %0, %%rdx" ::"r"(rdx_out));
     return result;
   };
