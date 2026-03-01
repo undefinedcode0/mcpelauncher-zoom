@@ -11,10 +11,6 @@
 
 Zoom zoom;
 
-unsigned long CameraApi_tryGetFOV(void *t) {
-  return zoom.CameraAPI_tryGetFOV(t);
-}
-
 extern "C" [[gnu::visibility("default")]] void mod_preinit() {}
 
 extern "C" [[gnu::visibility("default")]] void mod_init() {
