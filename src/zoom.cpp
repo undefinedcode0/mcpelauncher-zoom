@@ -9,16 +9,18 @@
 // lastClientZoom, and overwrite it when zoom is active.
 
 float Zoom::applyFOV(float fov) {
-  lastClientZoom = fov;
+  if (fov > 0.0f)
+    lastClientZoom = fov;
+
   if (!Conf::animated) {
     return zoomKeyDown ? zoomLevel : fov;
   }
-  if (transition.inProgress() || zoomKeyDown) {
+  if (transition.inProgress()) {
     transition.tick();
-    float current = transition.getCurrent();
-    if (current > 0.0f)
-      return current;
+    return transition.getCurrent();
   }
+  if (zoomKeyDown)
+    return zoomLevel;
   return fov;
 }
 
@@ -29,6 +31,8 @@ float Zoom::getCurrentFOV() {
 }
 
 bool Zoom::onMouseScroll(double dy) {
+  fprintf(stderr, "[zoom] scroll dy=%.2f zoomKeyDown=%d\n", dy,
+          (int)zoomKeyDown);
   if (zoomKeyDown &&
       game_window_is_mouse_locked(game_window_get_primary_window())) {
     if (dy > 0) {
