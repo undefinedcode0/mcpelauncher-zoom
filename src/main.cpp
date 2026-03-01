@@ -125,6 +125,8 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
     fprintf(stderr, "[zoom] fn_offset=0x%lx\n",
             reinterpret_cast<uintptr_t>(fn) - mc_base);
     fprintf(stderr, "[zoom] mc_base=0x%lx\n", mc_base);
+    fprintf(stderr, "[zoom] mc_base=0x%lx fn=0x%lx\n", mc_base,
+            reinterpret_cast<uintptr_t>(fn));
     FovResult r = CameraAPI_tryGetFOV_orig(t);
     return r;
   };
