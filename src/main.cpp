@@ -117,6 +117,11 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   *reinterpret_cast<FovResult (**)(void *)>(CameraAPI_tryGetFOV) =
       [](void *t) -> FovResult {
     FovResult r = CameraAPI_tryGetFOV_orig(t);
+    if (r.rax != 0) {
+      float *fovPtr = reinterpret_cast<float *>(r.rax + 0x18);
+      *reinterpret_cast<volatile float *>(fovPtr) =
+          *reinterpret_cast<volatile float *>(fovPtr); // no-op for now
+    }
     return r;
   };
 
