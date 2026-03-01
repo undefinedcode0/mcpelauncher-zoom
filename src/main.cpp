@@ -117,7 +117,6 @@ extern "C" [[gnu::visibility("default")]] void mod_init() {
   *reinterpret_cast<FovResult (**)(void *)>(CameraAPI_tryGetFOV) =
       [](void *t) -> FovResult {
     FovResult r = CameraAPI_tryGetFOV_orig(t);
-    zoom.applyFOV(r.rax);
     return r;
   };
 
